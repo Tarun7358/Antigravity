@@ -19,6 +19,7 @@ import CreateChannelModal from '../components/Modals/CreateChannelModal';
 import InviteModal from '../components/Modals/InviteModal';
 import ServerSettingsModal from '../components/Modals/ServerSettingsModal';
 import SettingsModal from '../components/Modals/SettingsModal';
+import UpdateBanner from '../components/Updates/UpdateBanner';
 import { AuthContext } from '../context/AuthContext';
 import { db } from '../config/firebase';
 import { collection, query, onSnapshot, orderBy, doc, updateDoc, serverTimestamp, collectionGroup, limit } from 'firebase/firestore';
@@ -129,6 +130,7 @@ const Dashboard = () => {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const channelData = snapshot.docs.map(doc => ({
+        id: doc.id,
         _id: doc.id,
         ...doc.data()
       }));
@@ -138,8 +140,6 @@ const Dashboard = () => {
         const firstText = channelData.find(c => c.type === 'text');
         if (firstText) {
           setActiveChannel(firstText);
-          // If we were just coming from a no-workspace state, maybe go to chat?
-          // Or stay on dashboard. Let's stay on dashboard for now.
         }
       }
     }, (error) => {
@@ -287,6 +287,7 @@ const Dashboard = () => {
       />
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <UpdateBanner />
         <div className="flex-1 flex overflow-hidden">
           <div className="flex-1 flex flex-col min-w-0">
              {renderContent()}

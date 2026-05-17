@@ -3,7 +3,7 @@ import {
   Hash, Volume2, Plus, Layout, FileText, 
   Compass, Settings, Loader2, LogOut, 
   User, ChevronDown, ChevronRight, 
-  Code2, MessageSquare, Bot, Calendar, GitBranch, Mic, MicOff
+  Code2, MessageSquare, Bot, Calendar, GitBranch, Mic, MicOff, UserPlus, PhoneOff, Headphones
 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import { db } from '../../config/firebase';
@@ -60,8 +60,10 @@ const VoiceChannelItem = ({ item, activeChannel, setActiveChannel, setActiveView
   const [participants, setParticipants] = useState([]);
 
   useEffect(() => {
-    if (!activeWorkspace?._id || !item?.id) return;
-    const q = query(collection(db, 'workspaces', activeWorkspace._id, 'channels', item.id, 'participants'));
+    const wsId = activeWorkspace?._id || activeWorkspace?.id;
+    const chId = item?._id || item?.id;
+    if (!wsId || !chId) return;
+    const q = query(collection(db, 'workspaces', wsId, 'channels', chId, 'participants'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const parts = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setParticipants(parts);
@@ -69,36 +71,46 @@ const VoiceChannelItem = ({ item, activeChannel, setActiveChannel, setActiveView
     return () => unsubscribe();
   }, [activeWorkspace, item]);
 
-  const isActive = activeChannel?.id === item.id;
+  const isActive = (activeChannel?._id || activeChannel?.id) === (item?._id || item?.id);
 
   return (
-    <div className="space-y-1">
-      <button
+    <div className="space-y-0.5">
+      <div
         onClick={() => {
           setActiveChannel(item);
           setActiveView('voice');
         }}
-        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all ${
+        className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer group transition-all ${
           isActive
-            ? 'bg-slate-800 text-white shadow-md'
-            : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-300'
+            ? 'bg-slate-800/90 text-white shadow'
+            : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
         }`}
       >
-        <Volume2 className="w-4 h-4 shrink-0 text-rose-400" />
-        <span className="text-sm font-medium truncate">{item.name}</span>
-      </button>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Volume2 className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`} />
+          <span className="text-sm font-medium truncate">{item.name}</span>
+        </div>
 
-      {/* Real-time Voice Participants List */}
+        {/* Discord Action Icons on hover */}
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1">
+          <UserPlus className="w-3.5 h-3.5 text-slate-400 hover:text-white transition-colors" title="Invite" onClick={(e) => { e.stopPropagation(); }} />
+          <Settings className="w-3.5 h-3.5 text-slate-400 hover:text-white transition-colors" title="Edit Channel" onClick={(e) => { e.stopPropagation(); }} />
+        </div>
+      </div>
+
+      {/* Real-time Voice Participants List (Indented under channel) */}
       {participants.length > 0 && (
         <div className="pl-6 pr-2 space-y-1 py-1 border-l-2 border-slate-800 ml-3">
           {participants.map((p) => (
-            <div key={p.id} className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-slate-800/40 transition-colors group">
-              <div className="relative">
-                <img src={p.avatar || `https://ui-avatars.com/api/?name=${p.name}`} alt={p.name} className="w-5 h-5 rounded-full border border-slate-700 bg-slate-800 object-cover" />
-                {p.speaking && <div className="absolute -inset-0.5 rounded-full border border-indigo-500 animate-ping opacity-75" />}
+            <div key={p.id} className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-slate-800/40 transition-colors group/part cursor-pointer">
+              <div className="relative shrink-0">
+                <img src={p.avatar || `https://ui-avatars.com/api/?name=${p.name}`} alt={p.name} className="w-6 h-6 rounded-full border border-slate-700 bg-slate-800 object-cover shadow" />
+                {p.speaking && <div className="absolute -inset-0.5 rounded-full border-2 border-emerald-500 animate-pulse" />}
               </div>
-              <span className="text-xs text-slate-400 group-hover:text-slate-200 truncate flex-1">{p.name}</span>
-              {p.speaking ? <Mic className="w-3 h-3 text-indigo-400 shrink-0" /> : <MicOff className="w-3 h-3 text-slate-600 shrink-0" />}
+              <span className="text-xs font-medium text-slate-400 group-hover/part:text-slate-200 truncate flex-1">{p.name}</span>
+              <div className="flex items-center gap-1 shrink-0 opacity-80 group-hover/part:opacity-100">
+                {p.speaking ? <Mic className="w-3 h-3 text-emerald-400 animate-bounce" /> : <MicOff className="w-3 h-3 text-slate-600" />}
+              </div>
             </div>
           ))}
         </div>
@@ -320,7 +332,7 @@ const Sidebar = ({
                         );
                       }
                       return (
-                        <button
+                        <div
                           key={item.id}
                           onClick={() => {
                             if (item.view) {
@@ -330,21 +342,30 @@ const Sidebar = ({
                               setActiveView(item.type === 'voice' ? 'voice' : item.type === 'forum' ? 'forum' : 'chat');
                             }
                           }}
-                          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-all ${
-                            (activeChannel?.id === item.id)
-                              ? 'bg-slate-800 text-white shadow-md'
-                              : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-300'
+                          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg cursor-pointer group transition-all ${
+                            ((activeChannel?._id || activeChannel?.id) === (item?._id || item?.id))
+                              ? 'bg-slate-800/90 text-white shadow'
+                              : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                           }`}
                         >
-                          {item.type === 'text' ? (
-                            <Hash className="w-4 h-4 shrink-0 text-indigo-400" />
-                          ) : item.type === 'forum' ? (
-                            <FileText className="w-4 h-4 shrink-0 text-indigo-400" />
-                          ) : (
-                            item.icon || <Hash className="w-4 h-4 shrink-0 text-indigo-400" />
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {item.type === 'text' ? (
+                              <Hash className={`w-4 h-4 shrink-0 ${((activeChannel?._id || activeChannel?.id) === (item?._id || item?.id)) ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                            ) : item.type === 'forum' ? (
+                              <FileText className={`w-4 h-4 shrink-0 ${((activeChannel?._id || activeChannel?.id) === (item?._id || item?.id)) ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                            ) : (
+                              item.icon || <Hash className="w-4 h-4 shrink-0 text-slate-400" />
+                            )}
+                            <span className="text-sm font-medium truncate">{item.name}</span>
+                          </div>
+
+                          {cat.type !== 'dev' && (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1">
+                              <UserPlus className="w-3.5 h-3.5 text-slate-400 hover:text-white transition-colors" title="Invite" onClick={(e) => { e.stopPropagation(); }} />
+                              <Settings className="w-3.5 h-3.5 text-slate-400 hover:text-white transition-colors" title="Edit Channel" onClick={(e) => { e.stopPropagation(); }} />
+                            </div>
                           )}
-                          <span className="text-sm font-medium truncate">{item.name}</span>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -353,6 +374,35 @@ const Sidebar = ({
             ))
           )}
         </div>
+
+        {/* Discord Voice Connected Bar */}
+        {activeView === 'voice' && activeChannel && (
+          <div className="bg-slate-950/90 px-3 py-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 shadow-xl backdrop-blur-md shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative flex items-center justify-center">
+                <Headphones className="w-4 h-4 text-emerald-400 animate-pulse" />
+                <div className="absolute -inset-1 rounded-full border border-emerald-500/30 animate-ping opacity-75" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-emerald-400 truncate flex items-center gap-1">
+                  Voice Connected
+                </div>
+                <div className="text-[10px] text-slate-400 truncate hover:text-slate-200 cursor-pointer transition-colors">
+                  {activeChannel.name} / {activeWorkspace?.name || 'Workspace'}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button 
+                onClick={(e) => { e.stopPropagation(); setActiveView('dashboard'); setActiveChannel(null); }}
+                className="p-2 bg-slate-900 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-800 hover:border-rose-500/30 rounded-xl transition-all shadow"
+                title="Disconnect"
+              >
+                <PhoneOff className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* User Status Footer */}
         <div className="bg-slate-950/50 p-2 border-t border-slate-800">

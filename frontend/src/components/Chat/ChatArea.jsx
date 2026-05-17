@@ -14,6 +14,8 @@ import {
 } from 'firebase/firestore';
 import { encryptMessage, decryptMessage } from '../../utils/encryption';
 
+const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+
 const ChatArea = ({ activeChannel, activeWorkspace }) => {
   const { user } = useContext(AuthContext);
   const [messages, setMessages] = useState([]);
@@ -79,7 +81,7 @@ const ChatArea = ({ activeChannel, activeWorkspace }) => {
       botResponse = `🚀 **Deploying to Production**\nService: ${payload || 'core-api'}\nStatus: Building... [View Logs]`;
     } else if (command === 'bot') {
       try {
-        const res = await fetch('http://localhost:5000/api/ai/query', {
+        const res = await fetch(`${BACKEND}/api/ai/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: payload, context: { workspace: activeWorkspace.name } })

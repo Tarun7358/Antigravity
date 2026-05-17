@@ -16,6 +16,7 @@ const VoiceRoom = ({ activeChannel, activeWorkspace, setActiveView, setActiveCha
   const [showActionItems, setShowActionItems] = useState(false);
   
   const localVideoRef = useRef(null);
+  const sessionUidRef = useRef(`${user?.uid || 'guest'}-${Math.random().toString(36).substr(2, 6)}`);
 
   // Initialize Local Stream
   useEffect(() => {
@@ -40,16 +41,20 @@ const VoiceRoom = ({ activeChannel, activeWorkspace, setActiveView, setActiveCha
 
   // Handle Real-Time Presence in Firestore
   useEffect(() => {
-    if (!user?.uid || !activeWorkspace?._id || !activeChannel?._id) return;
+    const wsId = activeWorkspace?._id || activeWorkspace?.id;
+    const chId = activeChannel?._id || activeChannel?.id;
+    if (!wsId || !chId) return;
 
-    const participantRef = doc(db, 'workspaces', activeWorkspace._id, 'channels', activeChannel._id, 'participants', user.uid);
+    const currentSessionId = sessionUidRef.current;
+    const participantRef = doc(db, 'workspaces', wsId, 'channels', chId, 'participants', currentSessionId);
 
     const joinVoice = async () => {
       try {
         await setDoc(participantRef, {
-          id: user.uid,
-          name: user.username,
-          avatar: user.avatar,
+          id: currentSessionId,
+          uid: user?.uid || 'guest',
+          name: user?.username || user?.displayName || 'Teammate',
+          avatar: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || 'Teammate')}`,
           speaking: !isMuted,
           joinedAt: serverTimestamp()
         });
@@ -61,11 +66,11 @@ const VoiceRoom = ({ activeChannel, activeWorkspace, setActiveView, setActiveCha
     joinVoice();
 
     // Listen to all participants in this voice channel
-    const q = query(collection(db, 'workspaces', activeWorkspace._id, 'channels', activeChannel._id, 'participants'));
+    const q = query(collection(db, 'workspaces', wsId, 'channels', chId, 'participants'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const parts = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() }))
-        .filter(p => p.id !== user.uid); // Exclude local user from remote list
+        .filter(p => p.id !== currentSessionId); // Exclude local session from remote list
       setRemoteParticipants(parts);
     });
 
@@ -150,9 +155,11 @@ const VoiceRoom = ({ activeChannel, activeWorkspace, setActiveView, setActiveCha
   };
 
   const handleDisconnect = async () => {
-    if (user?.uid && activeWorkspace?._id && activeChannel?._id) {
-      const participantRef = doc(db, 'workspaces', activeWorkspace._id, 'channels', activeChannel._id, 'participants', user.uid);
-      await deleteDoc(participantRef);
+    const wsId = activeWorkspace?._id || activeWorkspace?.id;
+    const chId = activeChannel?._id || activeChannel?.id;
+    if (wsId && chId) {
+      const participantRef = doc(db, 'workspaces', wsId, 'channels', chId, 'participants', sessionUidRef.current);
+      await deleteDoc(participantRef).catch(err => console.error(err));
     }
     if (localStream) {
       localStream.getTracks().forEach(track => track.stop());

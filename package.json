@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "description": "Anti Gravity Collaborative Workspace",
   "scripts": {
-    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend && npm install --prefix electron",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run dev --prefix frontend",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:desktop": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run start --prefix electron\"",
+    "build:frontend": "npm run build --prefix frontend",
+    "build:desktop": "npm run build:frontend && npm run dist --prefix electron",
+    "build:desktop:mac": "npm run build:frontend && npm run dist:mac --prefix electron",
+    "build:desktop:linux": "npm run build:frontend && npm run dist:linux --prefix electron",
+    "build:desktop:all": "npm run build:frontend && npm run dist:all --prefix electron"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

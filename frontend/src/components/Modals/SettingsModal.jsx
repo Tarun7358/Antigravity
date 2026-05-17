@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, User, Shield, Bell, Monitor, Volume2, 
-  Code, Eye, Bot, LogOut
+  Code, Eye, Bot, LogOut, RefreshCw
 } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import AccountPanel from './SettingsPanels/AccountPanel';
@@ -13,6 +13,7 @@ import AppearancePanel from './SettingsPanels/AppearancePanel';
 import VoiceVideoPanel from './SettingsPanels/VoiceVideoPanel';
 import DeveloperSettingsPanel from './SettingsPanels/DeveloperSettingsPanel';
 import AIPrefPanel from './SettingsPanels/AIPrefPanel';
+import UpdateManagementPanel from './SettingsPanels/UpdateManagementPanel';
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const { logout } = useContext(AuthContext);
@@ -31,6 +32,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
     { name: 'Voice & Video', icon: <Volume2 className="w-4 h-4" /> },
     { name: 'Developer Hub', icon: <Code className="w-4 h-4" /> },
     { name: 'AI Preferences', icon: <Bot className="w-4 h-4" /> },
+    { name: 'Updates & Sync', icon: <RefreshCw className="w-4 h-4" /> },
   ];
 
   const renderContent = () => {
@@ -43,6 +45,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
       case 'Voice & Video': return <VoiceVideoPanel />;
       case 'Developer Hub': return <DeveloperSettingsPanel />;
       case 'AI Preferences': return <AIPrefPanel />;
+      case 'Updates & Sync': return <UpdateManagementPanel />;
       default: return <AccountPanel />;
     }
   };

@@ -44,10 +44,14 @@ app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', cred
 app.use(express.json());
 app.use(passport.initialize());
 
-// Connect to Prisma Database
-prisma.$connect()
-  .then(() => console.log('Successfully connected to PostgreSQL via Prisma'))
-  .catch((err) => console.error('Failed to connect to Prisma DB:', err));
+// Connect to Prisma Database (if configured)
+if (prisma) {
+  prisma.$connect()
+    .then(() => console.log('Successfully connected to PostgreSQL via Prisma'))
+    .catch((err) => console.error('Failed to connect to Prisma DB:', err));
+} else {
+  console.warn('[Prisma] Prisma client is disabled/null. Running with Firebase fallback.');
+}
 
 // Database selection (Legacy Fallback):
 const mongoEnabled = process.env.DB_PROVIDER === 'mongo' || process.env.ENABLE_MONGO === 'true';

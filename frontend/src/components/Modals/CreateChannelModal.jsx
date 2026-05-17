@@ -32,7 +32,7 @@ const CreateChannelModal = ({ isOpen, onClose, channelType = 'text', activeWorks
         createdAt: serverTimestamp(),
       });
 
-      onCreated({ _id: docRef.id, name, type });
+      onCreated({ id: docRef.id, _id: docRef.id, name, type });
       setName('');
 
       await logWorkspaceActivity(activeWorkspace._id, {

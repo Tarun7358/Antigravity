@@ -1,18 +1,75 @@
 {
-  "name": "electron",
+  "name": "antigravity-os",
+  "productName": "Anti Gravity OS",
   "version": "1.0.0",
-  "description": "",
+  "description": "Anti Gravity Developer Operating System",
   "main": "main.js",
   "scripts": {
-    "start": "set ELECTRON_START_URL=http://localhost:5173 && electron ."
+    "start": "wait-on http://localhost:5173 && set ELECTRON_START_URL=http://localhost:5173 && electron .",
+    "copy-dist": "node copy-dist.js",
+    "dist": "npm run copy-dist && electron-builder --win --x64",
+    "dist:mac": "npm run copy-dist && electron-builder --mac",
+    "dist:linux": "npm run copy-dist && electron-builder --linux",
+    "dist:all": "npm run copy-dist && electron-builder -wml"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "antigravity",
+    "developer",
+    "os",
+    "workspace",
+    "electron"
+  ],
+  "author": "Anti Gravity Team",
+  "license": "MIT",
   "type": "commonjs",
   "devDependencies": {
     "concurrently": "^9.2.1",
     "electron": "^42.1.0",
+    "electron-builder": "^24.13.3",
     "wait-on": "^9.0.10"
+  },
+  "build": {
+    "appId": "com.antigravity.devos",
+    "productName": "Anti Gravity OS",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "node_modules/**/*",
+      "frontend-dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Anti Gravity OS"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Tarun7358",
+        "repo": "Antigravity"
+      }
+    ]
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   }
 }

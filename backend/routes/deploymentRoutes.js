@@ -9,11 +9,11 @@ const activeDeployments = new Map();
 // GET /api/deployments/:workspaceId - fetch deployment history from PostgreSQL
 router.get('/:workspaceId', async (req, res) => {
   try {
-    const deployments = await prisma.deploymentLog.findMany({
+    const deployments = prisma ? await prisma.deploymentLog.findMany({
       where: { workspaceId: req.params.workspaceId },
       orderBy: { createdAt: 'desc' },
       take: 20,
-    });
+    }) : [];
     res.json({ deployments });
   } catch (err) {
     console.error('Failed to fetch deployments:', err);
@@ -32,16 +32,18 @@ router.post('/:workspaceId/deploy', async (req, res) => {
   // Persist the deployment record to PostgreSQL
   let dbRecord = null;
   try {
-    dbRecord = await prisma.deploymentLog.create({
-      data: {
-        id: deploymentId,
-        service,
-        env,
-        status: 'building',
-        commit: `manual trigger`,
-        workspaceId,
-      },
-    });
+    if (prisma) {
+      dbRecord = await prisma.deploymentLog.create({
+        data: {
+          id: deploymentId,
+          service,
+          env,
+          status: 'building',
+          commit: `manual trigger`,
+          workspaceId,
+        },
+      });
+    }
   } catch (err) {
     console.error('Could not persist deployment to DB (continuing anyway):', err.message);
   }
@@ -98,7 +100,7 @@ router.post('/:workspaceId/deploy', async (req, res) => {
 
   proc.on('close', async (code) => {
     const finalStatus = code === 0 ? 'active' : 'failed';
-    if (dbRecord) {
+    if (dbRecord && prisma) {
       try {
         await prisma.deploymentLog.update({
           where: { id: deploymentId },
